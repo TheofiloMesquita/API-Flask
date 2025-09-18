@@ -1,3 +1,4 @@
-# DAM---API - Atividade 1 
-TheofiloMesquita
-Julia.parreiras
+# API - Flask
+Kauan Felipe
+Julia Parreiras
+Theofilo Mesquita

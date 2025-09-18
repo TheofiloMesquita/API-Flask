@@ -1,7 +1,8 @@
 import os
 
 class Config:               
-                            # tipo do banco e a sua localização (arquivo)
+    
+    # tipo do banco e a sua localização (arquivo)
     SQLALCHEMY_DATABASE_URI = 'sqlite:///database.db'
     #  desabilita o recurso de o SQLAlchemy monitorar e emitir sinais quando um objeto é alterado, o que é a prática recomendada
     SQLALCHEMY_TRACK_MODIFICATIONS = False
