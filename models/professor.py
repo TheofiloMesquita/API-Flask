@@ -1,21 +1,21 @@
 from models import db
 
-class Task(db.Model):
-    __tablename__ = "tasks"
+class Professor(db.Model):
+    __tablename__ = "professor"
 
     # TODO: Define os campos e o relacionamento da tabela Task
     # - id: chave primária da tarefa
     id = db.Column(db.Integer, primary_key=True)
-    # - title: título da tarefa (obrigatório)
-    title = db.Column(db.String(200), nullable=False)
-    # - description: descrição detalhada da tarefa (obrigatório)
-    description = db.Column(db.Text, nullable=False)
-    # - user_id: chave estrangeira que conecta a tarefa a um usuário (não nulo)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    # - status: indica o estado da tarefa, padrão "Pendente"
-    status = db.Column(db.String(20), default="Pendente", nullable=False)
-    # - user: relacionamento com a classe User, usando back_populates="tasks" para criar o vínculo bidirecional
-    user = db.relationship('User', back_populates='tasks')
+    # - nome: nome do Professor
+    nome = db.Column(db.String(100), nullable=False)
+    # - idade: idade do Professor
+    idade = db.Column(db.Int, nullable=False)
+    # - materia: materia que o Professor leciona
+    materia = db.Column(db.String(100), nullable=False)
+    # - observacoes: informações adicionais sobre o professor
+    observacoes = db.Column(db.Text, nullable=True)
+    # - turma: relacionamento com a classe Turma, usando back_populates="professor" para criar o vínculo bidirecional
+    turma = db.relationship('Turma', back_populates='professor')
 
     def __repr__(self):
-        return f"<Task {self.title} - {self.status}>"
+        return f"<Professor {self.nome} - {self.materia}>"
