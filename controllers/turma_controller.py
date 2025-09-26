@@ -1,82 +1,177 @@
-from flask import render_template, request, redirect, url_for
+from flask import Blueprint, request, jsonify
 from models.turma import Turma
-from models.professor import Professor
-from models import db
+from models.base import db
 
-class TurmaController:
+turma_bp = Blueprint("turma", __name__)
 
-    @staticmethod
-    def listar_turmas():
-        # Busca todas as turmas no banco de dados
-        turmas = Turma.query.all()
-        # Renderiza o template com a lista de turmas
-        return render_template("list_turmas.html", turmas=turmas)
-    
-    @staticmethod
-    def criar_turma():
-        if request.method == "POST":
-            # Obtém os dados do formulário
-            descricao = request.form.get("descricao")
-            professor_id = request.form.get("professor_id")
-            ativo = request.form.get("ativo") == "on"
 
-            # Verifica se o professor existe
-            professor = Professor.query.get(professor_id)
-            if not professor:
-                return "Erro: Professor não encontrado", 400
+@turma_bp.route("/", methods=["POST"])
+def create_turma():
+    """
+    Cria uma turma
+    ---
+    tags:
+      - Turmas
+    parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          required:
+            - descricao
+          properties:
+            descricao:
+              type: string
+              example: "Turma A"
+            professor_id:
+              type: integer
+              example: 1
+            ativo:
+              type: boolean
+              example: true
+    responses:
+      201:
+        description: Turma criada com sucesso
+      400:
+        description: Erro de validação
+    """
+    data = request.get_json(silent=True)
+    if not data:
+        return jsonify({"error": "Requisição inválida: body JSON obrigatório"}), 400
 
-            # Cria um novo objeto Turma
-            nova_turma = Turma(
-                descricao=descricao,
-                professor=professor,
-                ativo=ativo
-            )
-            # Adiciona e salva a nova turma no banco de dados
-            db.session.add(nova_turma)
-            db.session.commit()
-            # Redireciona para a lista de turmas
-            return redirect(url_for("TurmaController.listar_turmas"))
-        
-        # Busca todos os professores para exibir no formulário
-        professores = Professor.query.all()
-        # Renderiza o template de criação de turma
-        return render_template("create_turma.html", professores=professores)
-    
-    @staticmethod
-    def atualizar_turma(turma_id):
-        # Busca a turma pelo ID
-        turma = Turma.query.get(turma_id)
-        if request.method == "POST" and turma:
-            # Obtém os dados do formulário
-            descricao = request.form.get("descricao")
-            professor_id = request.form.get("professor_id")
-            ativo = request.form.get("ativo") == "on"
+    descricao = data.get("descricao")
+    if not descricao or not isinstance(descricao, str) or not descricao.strip():
+        return jsonify({"error": "Campo 'descricao' é obrigatório e deve ser texto"}), 400
 
-            # Verifica se o professor existe
-            professor = Professor.query.get(professor_id)
-            if not professor:
-                return "Erro: Professor não encontrado", 400
+    professor_id = data.get("professor_id")
+    ativo = data.get("ativo", True)
 
-            # Atualiza os campos da turma
-            turma.descricao = descricao
-            turma.professor = professor
-            turma.ativo = ativo
-            db.session.commit()
-            # Redireciona para a lista de turmas
-            return redirect(url_for("TurmaController.listar_turmas"))
+    turma = Turma(
+        descricao=descricao.strip(),
+        professor_id=professor_id,
+        ativo=bool(ativo)
+    )
+    db.session.add(turma)
+    db.session.commit()
 
-        # Busca todos os professores para exibir no formulário de edição
-        professores = Professor.query.all()
-        # Renderiza o template de edição de turma
-        return render_template("edit_turma.html", turma=turma, professores=professores)
+    return jsonify(turma.to_dict()), 201
 
-    @staticmethod
-    def apagar_turma(turma_id):
-        # Busca a turma pelo ID
-        turma = Turma.query.get(turma_id)
-        # Remove a turma do banco de dados, se existir
-        if turma:
-            db.session.delete(turma)
-            db.session.commit()
-        # Redireciona para a lista de turmas
-        return redirect(url_for("TurmaController.listar_turmas"))
+
+@turma_bp.route("/", methods=["GET"])
+def get_turmas():
+    """
+    Lista todas as turmas
+    ---
+    tags:
+      - Turmas
+    responses:
+      200:
+        description: Lista de turmas
+    """
+    turmas = Turma.query.all()
+    return jsonify([t.to_dict() for t in turmas]), 200
+
+
+@turma_bp.route("/<int:id>", methods=["GET"])
+def get_turma(id):
+    """
+    Obtém uma turma por ID
+    ---
+    tags:
+      - Turmas
+    parameters:
+      - name: id
+        in: path
+        type: integer
+        required: true
+        description: ID da turma
+    responses:
+      200:
+        description: Turma encontrada
+      404:
+        description: Turma não encontrada
+    """
+    turma = Turma.query.get_or_404(id)
+    return jsonify(turma.to_dict()), 200
+
+
+@turma_bp.route("/<int:id>", methods=["PUT"])
+def put_turma(id):
+    """
+    Atualiza uma turma
+    ---
+    tags:
+      - Turmas
+    parameters:
+      - name: id
+        in: path
+        type: integer
+        required: true
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          properties:
+            descricao:
+              type: string
+              example: "Turma A - Atualizada"
+            professor_id:
+              type: integer
+              example: 2
+            ativo:
+              type: boolean
+              example: false
+    responses:
+      200:
+        description: Turma atualizada
+      400:
+        description: Erro de validação
+      404:
+        description: Turma não encontrada
+    """
+    turma = Turma.query.get_or_404(id)
+    data = request.get_json(silent=True)
+    if not data:
+        return jsonify({"error": "Requisição inválida: body JSON obrigatório"}), 400
+
+    if "descricao" in data:
+        descricao = data.get("descricao")
+        if not descricao or not isinstance(descricao, str) or not descricao.strip():
+            return jsonify({"error": "Campo 'descricao' deve ser texto não vazio"}), 400
+        turma.descricao = descricao.strip()
+
+    if "professor_id" in data:
+        turma.professor_id = data.get("professor_id")
+
+    if "ativo" in data:
+        turma.ativo = bool(data.get("ativo"))
+
+    db.session.commit()
+    return jsonify(turma.to_dict()), 200
+
+
+@turma_bp.route("/<int:id>", methods=["DELETE"])
+def delete_turma(id):
+    """
+    Exclui uma turma por ID
+    ---
+    tags:
+      - Turmas
+    parameters:
+      - name: id
+        in: path
+        type: integer
+        required: true
+        description: ID da turma
+    responses:
+      200:
+        description: Turma excluída com sucesso
+      404:
+        description: Turma não encontrada
+    """
+    turma = Turma.query.get_or_404(id)
+    db.session.delete(turma)
+    db.session.commit()
+    return jsonify({"message": "Turma excluída com sucesso"}), 200

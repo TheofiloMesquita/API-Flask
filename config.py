@@ -1,11 +1,23 @@
 import os
 
-class Config:               
-    
-    # tipo do banco e a sua localização (arquivo)
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///database.db'
-    #  desabilita o recurso de o SQLAlchemy monitorar e emitir sinais quando um objeto é alterado, o que é a prática recomendada
+# Caminho base do projeto
+basedir = os.path.abspath(os.path.dirname(__file__))
+
+class Config:
+    # Chave secreta usada por Flask (sessões, segurança)
+    SECRET_KEY = os.environ.get("SECRET_KEY", "dev-secret")
+
+    # Banco de dados SQLite dentro da pasta instance/
+    SQLALCHEMY_DATABASE_URI = os.environ.get(
+        "DATABASE_URL",
+        "sqlite:///" + os.path.join(basedir, "instance", "app.db")
+    )
+
+    # Desativa notificações de modificação para economizar recursos
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    # chave secreta e única usada pelo Flask para a segurança da aplicação, assinar os cookies de sessão e proteger formulários
-    SECRET_KEY = os.urandom(24)
-    
+
+    # Configuração do Swagger (documentação da API)
+    SWAGGER = {
+        "title": "API Professores/Turmas/Alunos",
+        "uiversion": 3
+    }

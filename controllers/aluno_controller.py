@@ -1,115 +1,210 @@
-from flask import render_template, request, redirect, url_for
+from flask import Blueprint, request, jsonify
 from models.aluno import Aluno
-from models.turma import Turma
-from models.professor import Professor
-from models import db
-import datetime
+from models.base import db
+from datetime import datetime
 
-class AlunoController:
+aluno_bp = Blueprint("aluno", __name__)
 
-    @staticmethod
-    def listar_Alunos():
-        # Busca todos os alunos no banco de dados
-        alunos = Aluno.query.all()
-        # Renderiza o template com a lista de alunos
-        return render_template("list_alunos.html", alunos=alunos)
-    
-    @staticmethod
-    def criar_aluno():
-        if request.method == "POST":
-            # Obtém os dados do formulário
-            nome = request.form.get("nome")
-            idade = request.form.get("idade")
-            turma_id = request.form.get("turma_id")
-            data_nascimento = request.form.get("data_nascimento")
-            nota_primeiro_semestre = request.form.get("nota_primeiro_semestre")
-            nota_segundo_semestre = request.form.get("nota_segundo_semestre")
+# ---------------------- CRIAR ----------------------
+@aluno_bp.route("/", methods=["POST"])
+def create_aluno():
+    """
+    Cria um aluno
+    ---
+    tags:
+      - Alunos
+    parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          required:
+            - nome
+            - idade
+            - turma_id
+            - data_nascimento
+            - nota_primeiro_semestre
+            - nota_segundo_semestre
+            - media_final
+          properties:
+            nome:
+              type: string
+              example: "Ana Clara"
+            idade:
+              type: integer
+              example: 18
+            turma_id:
+              type: integer
+              example: 1
+            data_nascimento:
+              type: string
+              example: "2005-03-12"
+            nota_primeiro_semestre:
+              type: number
+              format: float
+              example: 8.0
+            nota_segundo_semestre:
+              type: number
+              format: float
+              example: 9.0
+            media_final:
+              type: number
+              format: float
+              example: 8.5
+    responses:
+      201:
+        description: Aluno criado com sucesso
+      400:
+        description: Erro de validação
+    """
+    data = request.get_json()
 
-            # Conversão de tipos dos dados recebidos
-            idade = int(idade) if idade else None
-            turma_id = int(turma_id) if turma_id else None
-            try:
-                data_nascimento = datetime.datetime.strptime(data_nascimento, "%Y-%m-%d").date()
-            except Exception:
-                data_nascimento = None
-            nota_primeiro_semestre = float(nota_primeiro_semestre) if nota_primeiro_semestre else None
-            nota_segundo_semestre = float(nota_segundo_semestre) if nota_segundo_semestre else None
-            # Calcula a média final se ambas as notas estiverem presentes
-            media_final = (nota_primeiro_semestre + nota_segundo_semestre) / 2 if nota_primeiro_semestre is not None and nota_segundo_semestre is not None else None
+    try:
+        data_nascimento = datetime.strptime(data["data_nascimento"], "%Y-%m-%d").date()
+    except (KeyError, ValueError):
+        return jsonify({"error": "Formato de data inválido, use YYYY-MM-DD"}), 400
 
-            # Cria um novo objeto Aluno
-            novo_aluno = Aluno(
-                nome=nome,
-                idade=idade,
-                turma_id=turma_id,
-                data_nascimento=data_nascimento,
-                nota_primeiro_semestre=nota_primeiro_semestre,
-                nota_segundo_semestre=nota_segundo_semestre,
-                media_final=media_final
-            )
-            # Adiciona e salva o novo aluno no banco de dados
-            db.session.add(novo_aluno)
-            db.session.commit()
-            # Redireciona para a lista de alunos
-            return redirect(url_for("AlunoController.listar_Alunos"))
+    aluno = Aluno(
+        nome=data["nome"],
+        idade=data["idade"],
+        turma_id=data["turma_id"],
+        data_nascimento=data_nascimento,
+        nota_primeiro_semestre=data["nota_primeiro_semestre"],
+        nota_segundo_semestre=data["nota_segundo_semestre"],
+        media_final=data["media_final"]
+    )
+    db.session.add(aluno)
+    db.session.commit()
+    return jsonify({"message": "Aluno criado com sucesso"}), 201
 
-        # Busca todas as turmas e professores para exibir no formulário
-        turmas = Turma.query.all()
-        professores = Professor.query.all()
-        # Renderiza o template de criação de aluno
-        return render_template("create_aluno.html", turmas=turmas, professores=professores)
 
-    @staticmethod
-    def atualizar_aluno(aluno_id):
-        # Busca o aluno pelo ID
-        aluno = Aluno.query.get(aluno_id)
-        if request.method == "POST":
-            # Obtém os dados do formulário
-            nome = request.form.get("nome")
-            idade = request.form.get("idade")
-            turma_id = request.form.get("turma_id")
-            data_nascimento = request.form.get("data_nascimento")
-            nota_primeiro_semestre = request.form.get("nota_primeiro_semestre")
-            nota_segundo_semestre = request.form.get("nota_segundo_semestre")
+# ---------------------- LISTAR TODOS ----------------------
+@aluno_bp.route("/", methods=["GET"])
+def get_alunos():
+    """
+    Lista todos os alunos
+    ---
+    tags:
+      - Alunos
+    responses:
+      200:
+        description: Lista de alunos
+    """
+    alunos = Aluno.query.all()
+    return jsonify([aluno.to_dict() for aluno in alunos]), 200
 
-            # Conversão de tipos dos dados recebidos
-            idade = int(idade) if idade else None
-            turma_id = int(turma_id) if turma_id else None
-            try:
-                data_nascimento = datetime.datetime.strptime(data_nascimento, "%Y-%m-%d").date()
-            except Exception:
-                data_nascimento = None
-            nota_primeiro_semestre = float(nota_primeiro_semestre) if nota_primeiro_semestre else None
-            nota_segundo_semestre = float(nota_segundo_semestre) if nota_segundo_semestre else None
-            # Calcula a média final se ambas as notas estiverem presentes
-            media_final = (nota_primeiro_semestre + nota_segundo_semestre) / 2 if nota_primeiro_semestre is not None and nota_segundo_semestre is not None else None
 
-            # Atualiza os dados do aluno
-            if aluno:
-                aluno.nome = nome
-                aluno.idade = idade
-                aluno.turma_id = turma_id
-                aluno.data_nascimento = data_nascimento
-                aluno.nota_primeiro_semestre = nota_primeiro_semestre
-                aluno.nota_segundo_semestre = nota_segundo_semestre
-                aluno.media_final = media_final
-                db.session.commit()
-            # Redireciona para a lista de alunos
-            return redirect(url_for("AlunoController.listar_Alunos"))
+# ---------------------- LISTAR POR ID ----------------------
+@aluno_bp.route("/<int:id>", methods=["GET"])
+def get_aluno(id):
+    """
+    Obtém um aluno por ID
+    ---
+    tags:
+      - Alunos
+    parameters:
+      - name: id
+        in: path
+        type: integer
+        required: true
+        description: ID do aluno
+    responses:
+      200:
+        description: Aluno encontrado
+      404:
+        description: Aluno não encontrado
+    """
+    aluno = Aluno.query.get_or_404(id)
+    return jsonify(aluno.to_dict()), 200
 
-        # Busca todas as turmas e professores para exibir no formulário de edição
-        turmas = Turma.query.all()
-        professores = Professor.query.all()
-        # Renderiza o template de edição de aluno
-        return render_template("edit_aluno.html", aluno=aluno, turmas=turmas, professores=professores)
 
-    @staticmethod
-    def apagar_aluno(aluno_id):
-        # Busca o aluno pelo ID
-        aluno = Aluno.query.get(aluno_id)
-        # Remove o aluno do banco de dados, se existir
-        if aluno:
-            db.session.delete(aluno)
-            db.session.commit()
-        # Redireciona para a lista de alunos
-        return redirect(url_for("AlunoController.listar_Alunos"))
+# ---------------------- ATUALIZAR ----------------------
+@aluno_bp.route("/<int:id>", methods=["PUT"])
+def put_aluno(id):
+    """
+    Atualiza um aluno
+    ---
+    tags:
+      - Alunos
+    parameters:
+      - name: id
+        in: path
+        type: integer
+        required: true
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          properties:
+            nome:
+              type: string
+              example: "Ana Clara Atualizada"
+            idade:
+              type: integer
+              example: 19
+            turma_id:
+              type: integer
+              example: 1
+            data_nascimento:
+              type: string
+              example: "2004-03-12"
+            nota_primeiro_semestre:
+              type: number
+              example: 7.5
+            nota_segundo_semestre:
+              type: number
+              example: 8.0
+            media_final:
+              type: number
+              example: 7.8
+    responses:
+      200:
+        description: Aluno atualizado
+      400:
+        description: Erro de validação
+    """
+    aluno = Aluno.query.get_or_404(id)
+    data = request.get_json()
+
+    if "data_nascimento" in data:
+        try:
+            data["data_nascimento"] = datetime.strptime(
+                data["data_nascimento"], "%Y-%m-%d"
+            ).date()
+        except ValueError:
+            return jsonify({"error": "Formato de data inválido, use YYYY-MM-DD"}), 400
+
+    for key, value in data.items():
+        if hasattr(aluno, key):
+            setattr(aluno, key, value)
+
+    db.session.commit()
+    return jsonify(aluno.to_dict()), 200
+
+
+# ---------------------- DELETAR ----------------------
+@aluno_bp.route("/<int:id>", methods=["DELETE"])
+def delete_aluno(id):
+    """
+    Exclui um aluno por ID
+    ---
+    tags:
+      - Alunos
+    parameters:
+      - name: id
+        in: path
+        type: integer
+        required: true
+        description: ID do aluno
+    responses:
+      200:
+        description: Aluno excluído com sucesso
+      404:
+        description: Aluno não encontrado
+    """
+    aluno = Aluno.query.get_or_404(id)
+    db.session.delete(aluno)
+    db.session.commit()
+    return jsonify({"message": "Aluno excluído com sucesso"}), 200

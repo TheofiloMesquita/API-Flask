@@ -1,0 +1,21 @@
+# Python cache
+__pycache__/
+*.pyc
+
+# Virtual environments
+.venv/
+venv/
+VENV/
+
+# SQLite database (dentro da pasta instance/)
+instance/
+*.db
+
+# Flask migrations
+migrations/
+
+# Ambiente local
+.env
+
+# Arquivos de sistema
+.DS_Store
