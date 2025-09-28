@@ -1,11 +1,18 @@
-version: "3.9"
-
 services:
-  api:
+  web:
     build: .
     container_name: api_flask
     ports:
       - "5000:5000"
+    volumes:
+      - .:/app
     environment:
-      - FLASK_ENV=production
-    restart: always
+      - FLASK_APP=app.py
+      - FLASK_ENV=development
+
+  test:
+    build: .
+    container_name: api_flask_test
+    command: pytest -v
+    volumes:
+      - .:/app

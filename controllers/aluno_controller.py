@@ -6,6 +6,7 @@ from datetime import datetime
 aluno_bp = Blueprint("aluno", __name__)
 
 # ---------------------- CRIAR ----------------------
+# ---------------------- CRIAR ----------------------
 @aluno_bp.route("/", methods=["POST"])
 def create_aluno():
     """
@@ -76,7 +77,9 @@ def create_aluno():
     )
     db.session.add(aluno)
     db.session.commit()
-    return jsonify({"message": "Aluno criado com sucesso"}), 201
+
+    # Retorna o objeto criado com ID
+    return jsonify(aluno.to_dict()), 201
 
 
 # ---------------------- LISTAR TODOS ----------------------

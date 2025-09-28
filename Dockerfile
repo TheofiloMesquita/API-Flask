@@ -1,17 +1,24 @@
+# Usa a imagem oficial do Python
 FROM python:3.11-slim
 
-# Diretório de trabalho dentro do container
+# Define diretório de trabalho
 WORKDIR /app
 
-# Copia os arquivos necessários
-COPY requirements.txt requirements.txt
+# Copia arquivos de dependência
+COPY requirements.txt .
+
+# Instala dependências
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copia todo o código da aplicação
+# Copia o restante do código
 COPY . .
+
+# Variáveis de ambiente para o Flask
+ENV FLASK_APP=app.py
+ENV FLASK_ENV=development
 
 # Expõe a porta
 EXPOSE 5000
 
-# Usa gunicorn em modo produção com apenas 1 worker (estável)
-CMD ["gunicorn", "-b", "0.0.0.0:5000", "--workers=1", "app:create_app()"]
+# Comando padrão para rodar o Flask
+CMD ["flask", "run", "--host=0.0.0.0", "--port=5000"]

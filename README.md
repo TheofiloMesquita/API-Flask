@@ -1,169 +1,130 @@
-# 📚 API Flask - Gerenciamento Turmas
+📚 API Flask - Gerenciamento de Turmas
 
-Projeto desenvolvido em **Flask** seguindo o padrão **MVC (Model-View-Controller)**, utilizando **SQLAlchemy** para persistência de dados, **Flask-Migrate** para migrations e documentação com **Swagger (Flasgger)**.
+API desenvolvida em Flask com SQLAlchemy, Flask-Migrate e documentação via Swagger (Flasgger).
+O sistema permite gerenciar professores, turmas e alunos, com operações CRUD completas.
 
-O sistema permite gerenciar **professores**, **turmas** e **alunos**, incluindo operações **CRUD** completas e validação de relacionamentos:
-- Um professor pode ter várias turmas.
-- Uma turma pertence a um professor e pode ter vários alunos.
-- Um aluno pertence a uma turma.
+✅ Funcionalidades
 
----
+👨‍🏫 Professores – CRUD completo.
 
-## 🚀 Tecnologias utilizadas
-- [Flask](https://flask.palletsprojects.com/)
-- [Flask-Migrate](https://flask-migrate.readthedocs.io/)
-- [SQLAlchemy](https://www.sqlalchemy.org/)
-- [Marshmallow](https://marshmallow.readthedocs.io/)
-- [Flasgger (Swagger UI)](https://github.com/flasgger/flasgger)
-- [Docker](https://www.docker.com/)
+🏫 Turmas – CRUD completo, associadas a professores.
 
----
+👩‍🎓 Alunos – CRUD completo, associados a turmas.
 
-## 🏗 Arquitetura MVC
-O projeto segue a estrutura **MVC**:
+📑 Swagger – documentação automática disponível em /apidocs.
 
+🔎 Validações – exemplo: não é possível criar aluno sem turma.
 
-/project
-├── app.py # Arquivo principal da aplicação
-├── models/ # Modelos do banco (ORM SQLAlchemy)
-│ ├── professor.py
-│ ├── turma.py
-│ └── aluno.py
-├── controllers/ # Regras de negócio e rotas
-│ ├── professor_controller.py
-│ ├── turma_controller.py
-│ └── aluno_controller.py
-├── utils/ # Schemas do Marshmallow
-│ └── schemas.py
-├── migrations/ # Arquivos de controle do Flask-Migrate
-├── swagger_template.yml # Definições do Swagger
-├── Dockerfile
-└── docker-compose.yml
+🔧 Pré-requisitos
 
+Python 3.11+
 
----
+Pip
 
-## ⚙️ Como rodar localmente
+Docker e Docker Compose
 
-### 1. Clone o repositório
-```bash
+Make (opcional, para automação de comandos)
+
+🚀 Como rodar localmente (sem Docker)
+# Clone o repositório
 git clone https://github.com/seu-usuario/seu-repo.git
 cd seu-repo
 
-2. Crie um ambiente virtual e instale dependências
+# Crie e ative o ambiente virtual
 python -m venv venv
 source venv/bin/activate   # Linux/Mac
 venv\Scripts\activate      # Windows
 
+# Instale as dependências
 pip install -r requirements.txt
 
-3. Configure o banco de dados (SQLite por padrão)
+# Configure o banco e aplique as migrations
 flask db init
 flask db migrate -m "Initial migration"
 flask db upgrade
 
-4. Rode a aplicação
+# Rode a aplicação
 flask run
-
-
-➡️ Acesse no navegador:
-
-API: http://localhost:5000/
-
-Swagger: http://localhost:5000/apidocs
-
-🐳 Como rodar com Docker
-docker-compose up --build
 
 
 ➡️ Acesse:
 
-API: http://localhost:5000/
+API: http://localhost:5000
 
 Swagger: http://localhost:5000/apidocs
 
-🔗 Endpoints da API
-Professores
+🐳 Como rodar com Docker
+# Build dos containers
+docker-compose build --no-cache
 
-GET /professores/ → lista professores
+# Subir API
+docker-compose up web
 
-GET /professores/{id} → busca professor por ID
 
-POST /professores/ → cria professor
+➡️ Acesse:
 
-PUT /professores/{id} → atualiza professor
+API: http://localhost:5000
 
-DELETE /professores/{id} → remove professor
+Swagger: http://localhost:5000/apidocs
 
-📌 Exemplo de criação (POST /professores/):
+📦 Makefile (atalhos)
 
+Se você tiver o make instalado:
+
+make build   # Build da aplicação
+make up      # Sobe a aplicação
+make down    # Para a aplicação
+make test    # Roda os testes
+
+🧪 Testes com Pytest
+
+Rodar localmente:
+
+pytest -v
+
+
+Rodar dentro do Docker:
+
+docker-compose run --rm web pytest -v
+
+📑 Exemplos de uso
+Criar Professor
+POST /professores
 {
   "nome": "João da Silva",
-  "idade": 40,
-  "materia": "Matemática",
-  "observacoes": "Professor titular"
+  "email": "joao.silva@escola.com"
 }
 
-Turmas
-
-GET /turmas/ → lista turmas
-
-GET /turmas/{id} → busca turma por ID
-
-POST /turmas/ → cria turma (precisa de professor_id válido)
-
-PUT /turmas/{id} → atualiza turma
-
-DELETE /turmas/{id} → remove turma
-
-📌 Exemplo de criação (POST /turmas/):
-
+Criar Turma
+POST /turmas
 {
-  "descricao": "Turma de Engenharia Civil - 1º semestre",
-  "professor_id": 1,
-  "ativo": true
+  "nome": "Matemática Avançada",
+  "professor_id": 1
 }
 
-Alunos
-
-GET /alunos/ → lista alunos
-
-GET /alunos/{id} → busca aluno por ID
-
-POST /alunos/ → cria aluno (precisa de turma_id válido)
-
-PUT /alunos/{id} → atualiza aluno
-
-DELETE /alunos/{id} → remove aluno
-
-📌 Exemplo de criação (POST /alunos/):
-
+Criar Aluno
+POST /alunos
 {
-  "nome": "Ana Souza",
-  "idade": 20,
-  "turma_id": 1,
-  "data_nascimento": "2005-05-10",
-  "nota_primeiro_semestre": 8.5,
-  "nota_segundo_semestre": 7.0
+  "nome": "Maria Souza",
+  "email": "maria.souza@escola.com",
+  "data_nascimento": "2005-09-01",
+  "turma_id": 1
 }
 
-✅ Validações extras
+📂 Estrutura do projeto
+API-Flask/
+│── app.py              # Ponto de entrada Flask
+│── config.py           # Configurações da aplicação
+│── requirements.txt    # Dependências
+│── docker-compose.yml  # Orquestração Docker
+│── Dockerfile          # Build da imagem
+│── Makefile            # Automação de comandos
+│── instance/           # Banco de dados SQLite
+│── migrations/         # Controle de versões do banco
+│── controllers/        # Rotas (Aluno, Professor, Turma)
+│── models/             # Modelos SQLAlchemy
+│── tests/              # Testes com pytest
 
-Não é possível criar Turma sem professor existente.
+✨ Autor
 
-Não é possível criar Aluno sem turma existente.
-
-IDs são gerados automaticamente (não devem ser enviados no POST).
-
-🖥 Swagger UI
-
-Toda a documentação interativa está disponível em:
-👉 http://localhost:5000/apidocs
-
-No Swagger, os exemplos já estão preenchidos automaticamente (example) para facilitar os testes.
-
-👨‍💻 Autor
-
-Projeto desenvolvido para fins acadêmicos e de aprendizado em Flask + SQLAlchemy + Swagger.
-
----
+Projeto desenvolvido para aprendizado de Flask + Swagger + Docker com boas práticas de organização.
